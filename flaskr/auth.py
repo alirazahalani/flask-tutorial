@@ -25,8 +25,7 @@ def register():
 
         if error is None:
             try:
-                db.execute('Insert into user(username, password) values (?,?)',
-                           (username, generate_password_hash(password)))
+                db.execute('Insert into user(username, password) values (?,?)',(username, generate_password_hash(password)))
                 db.commit()
             except db.IntegrityError:
                 error = f"User (username) is already registerd."
@@ -38,7 +37,6 @@ def register():
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
-    import pdb; pdb.set_trace()
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -69,6 +67,19 @@ def load_logged_user():
         g.user = get_db().execute(
             'select * from user where user_id  = ?', (user_id,)
         ).fetchone()
+
+@bp.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+def login_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if g.user is None:
+            return redirect(url_for('auth.login'))
+        return view(**kwargs)
+    return wrapped_view
         
 
     
